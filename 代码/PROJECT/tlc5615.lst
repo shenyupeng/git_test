@@ -1,0 +1,51 @@
+C51 COMPILER V9.00   TLC5615                                                               06/27/2015 09:59:03 PAGE 1   
+
+
+C51 COMPILER V9.00, COMPILATION OF MODULE TLC5615
+OBJECT MODULE PLACED IN ..\OBJ\tlc5615.obj
+COMPILER INVOKED BY: D:\Program Files\Keil\C51\BIN\C51.EXE ..\HARDWARE\TLC5615\tlc5615.c BROWSE INCDIR(..\HARDWARE\LCD12
+                    -864;..\HARDWARE\TIMER;..\HARDWARE\TLC5615;..\PROJECT;..\USER;..\HARDWARE\LCD1602) DEBUG OBJECTEXTEND PRINT(.\tlc5615.lst
+                    -) OBJECT(..\OBJ\tlc5615.obj)
+
+line level    source
+
+   1          #include "tlc5615.h"
+   2          #include <intrins.h>
+   3          
+   4          
+   5          //数模转换
+   6          void DA_Conver(u16 DAValue)
+   7          {
+   8   1      
+   9   1              u8 i;
+  10   1              DAValue <<= 6;
+  11   1              //片选DA芯片
+  12   1              cs = 0;
+  13   1              clk = 0;
+  14   1      
+  15   1              for(i = 0; i < 12; i++)
+  16   1              {
+  17   2                      din = (bit)(DAValue & 0x8000);
+  18   2                      clk = 1;
+  19   2                      DAValue <<= 1;
+  20   2                      clk = 0;
+  21   2              }
+  22   1      
+  23   1              //cs的上升沿和下降沿只有在clk为低端时候才有效
+  24   1              cs = 1;                 
+  25   1              clk = 0;
+  26   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     41    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

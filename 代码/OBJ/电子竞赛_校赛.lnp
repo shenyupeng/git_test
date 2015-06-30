@@ -1,0 +1,8 @@
+"..\OBJ\man.obj",
+"..\OBJ\display.obj",
+"..\OBJ\algo.obj",
+"..\OBJ\timer.obj",
+"..\OBJ\tlc5615.obj",
+"..\OBJ\Lcd12864.obj" 
+TO "..\OBJ\电子竞赛_校赛" 
+PRINT(".\电子竞赛_校赛.m51") RAMSIZE(256) 

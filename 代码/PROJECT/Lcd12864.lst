@@ -1,0 +1,290 @@
+C51 COMPILER V9.00   LCD12864                                                              06/27/2015 09:59:03 PAGE 1   
+
+
+C51 COMPILER V9.00, COMPILATION OF MODULE LCD12864
+OBJECT MODULE PLACED IN ..\OBJ\Lcd12864.obj
+COMPILER INVOKED BY: D:\Program Files\Keil\C51\BIN\C51.EXE ..\HARDWARE\LCD12864\Lcd12864.c BROWSE INCDIR(..\HARDWARE\LCD
+                    -12864;..\HARDWARE\TIMER;..\HARDWARE\TLC5615;..\PROJECT;..\USER;..\HARDWARE\LCD1602) DEBUG OBJECTEXTEND PRINT(.\Lcd12864.
+                    -lst) OBJECT(..\OBJ\Lcd12864.obj)
+
+line level    source
+
+   1          #include "Lcd12864.h"
+   2          #include "timer.h"
+   3          
+   4          
+   5          
+   6          
+   7          
+   8          //LCD初始化
+   9          void LCDInit(void)
+  10          {
+  11   1              WriteCommandLCD(0x30,1);                //显示模式设置，开始要求每次检测忙信号
+  12   1              WriteCommandLCD(0x01,1);                //显示清屏
+  13   1              WriteCommandLCD(0x06,1);                //显示光标移动设置
+  14   1              WriteCommandLCD(0x0C,1);                //显示开及光标设置
+  15   1              
+  16   1      }
+  17          
+  18          
+  19          //读状态
+  20          u8 ReadStatusLCD(void)
+  21          {
+  22   1              LCD_Data = 0xFF;
+  23   1              LCD_RS = 0;
+  24   1              LCD_RW = 1;
+  25   1              LCD_E = 1;
+  26   1              while(LCD_Data & Busy)  //检测忙信号
+  27   1              ;
+  28   1              return LCD_Data;
+  29   1      }
+  30          
+  31          //写指令
+  32          void WriteCommandLCD(u8 WCLCD,BuysC)
+  33          {
+  34   1              if(BuysC)
+  35   1              ReadStatusLCD();
+  36   1                LCD_RS = 0;
+  37   1                LCD_RW = 0;
+  38   1                LCD_Data = WCLCD;
+  39   1                LCD_E = 1;
+  40   1                LCD_E = 1;
+  41   1                LCD_E = 1;
+  42   1                LCD_E = 0;
+  43   1      }
+  44          
+  45          
+  46          //写数据
+  47          void WriteDataLCD(u8 WDLCD)
+  48          {
+  49   1              ReadStatusLCD();                //检测忙
+  50   1              LCD_RS = 1;
+  51   1              LCD_RW = 0;
+  52   1              LCD_Data = WDLCD;
+  53   1              LCD_E = 1;
+C51 COMPILER V9.00   LCD12864                                                              06/27/2015 09:59:03 PAGE 2   
+
+  54   1              LCD_E = 1;
+  55   1              LCD_E = 1;
+  56   1              LCD_E = 0;
+  57   1      }
+  58          
+  59          
+  60          //读数据
+  61          u8 ReadDataLCD(void)
+  62          {
+  63   1              LCD_RS = 1;
+  64   1              LCD_RW = 1;
+  65   1              LCD_E = 0;
+  66   1              LCD_E = 0;
+  67   1              LCD_E = 1;
+  68   1              return (LCD_Data);
+  69   1      }
+  70          
+  71          
+  72          //清屏
+  73          void LCDClear(void)
+  74          {
+  75   1              WriteCommandLCD(0x01,1);                //显示清屏
+  76   1              WriteCommandLCD(0x34,1);                //显示光标移动设置
+  77   1              WriteCommandLCD(0x30,1);                //显示开及光标设置
+  78   1      }
+  79          
+  80          
+  81          //屏幕闪动
+  82          void LCDFlash(void)
+  83          {
+  84   1              WriteCommandLCD(0x08,1);                //显示清屏
+  85   1              Delayms(400);
+  86   1              WriteCommandLCD(0x0c,1);                //显示开及光标设置
+  87   1              Delayms(400);
+  88   1              WriteCommandLCD(0x08,1);                //显示清屏
+  89   1              Delayms(400);
+  90   1              WriteCommandLCD(0x0c,1);                //显示开及光标设置
+  91   1              Delayms(400);
+  92   1              WriteCommandLCD(0x08,1);                //显示清屏
+  93   1              Delayms(400);
+  94   1      
+  95   1      }
+  96          
+  97          
+  98          //显示一个字符
+  99          void DisplayOneChar(u8 X,u8 Y,u8 DData)
+ 100          {
+ 101   1              if(Y<1)
+ 102   1              {
+ 103   2                      Y = 1;
+ 104   2              }
+ 105   1              if(Y>4)
+ 106   1              {
+ 107   2                      Y = 4;
+ 108   2              }
+ 109   1              X &= 0x0F;              //限制X不能大于16，Y不能大于1
+ 110   1              switch(Y)
+ 111   1              {
+ 112   2                      case 1:
+ 113   2                              X |= 0x80;
+ 114   2                              break;
+ 115   2                      case 2:
+C51 COMPILER V9.00   LCD12864                                                              06/27/2015 09:59:03 PAGE 3   
+
+ 116   2                              X |=0x90;
+ 117   2                              break;
+ 118   2                      case 3:
+ 119   2                              X |=0x88;
+ 120   2                              break;
+ 121   2                      case 4:
+ 122   2                              X |=0x98;
+ 123   2                              break;
+ 124   2              }
+ 125   1      
+ 126   1              WriteCommandLCD(X,0);           //这里不检测忙信号，发送地址码
+ 127   1              WriteDataLCD(DData);
+ 128   1      }
+ 129          
+ 130          //显示一串字符
+ 131          void DisplayListChar(u8 X, u8 Y, u8 *DData)
+ 132          {
+ 133   1              u8 ListLength,X2;
+ 134   1              ListLength = 0;
+ 135   1              X2 = X;
+ 136   1              if(Y<1)
+ 137   1              {
+ 138   2                      Y = 1;
+ 139   2              }
+ 140   1              if(Y>4)
+ 141   1              {
+ 142   2                      Y=4;
+ 143   2              }
+ 144   1              X &= 0x0F;              //限制X不能大于16，Y在1-4之内
+ 145   1              switch(Y)
+ 146   1              {
+ 147   2                      case 1:
+ 148   2                              X2 |=0x80;
+ 149   2                              break;
+ 150   2                      case 2:
+ 151   2                              X2 |=0x90;
+ 152   2                              break;
+ 153   2                      case 3:
+ 154   2                              X2 |=0x88;
+ 155   2                              break;
+ 156   2                      case 4:
+ 157   2                              X2 |=0x98;
+ 158   2                              break;
+ 159   2              }
+ 160   1              WriteCommandLCD(X2,1);          //发送地址码
+ 161   1              while(DData[ListLength]>=0x20)          //若到达字串尾则退出
+ 162   1              {
+ 163   2                      if(X <= 0x0F)   //X坐标应小于0x0F
+ 164   2                      {
+ 165   3                              WriteDataLCD(DData[ListLength]);
+ 166   3                              ListLength++;
+ 167   3                              X++;
+ 168   3                              Delayms(5);
+ 169   3                      }
+ 170   2              }
+ 171   1      }
+ 172          
+ 173          
+ 174          
+ 175          
+ 176          //显示一串数字
+ 177          
+C51 COMPILER V9.00   LCD12864                                                              06/27/2015 09:59:03 PAGE 4   
+
+ 178          void DisplayNumber(u8 X, u8 Y, u32 number,u8 count)
+ 179          {
+ 180   1              u8 array[11];
+ 181   1              u8 i;
+ 182   1              array[count] = 0;
+ 183   1              for (i = count; i>0; i--)
+ 184   1              {
+ 185   2                      array[i-1] = number % 10 + '0';
+ 186   2                      number /= 10; 
+ 187   2              }
+ 188   1      
+ 189   1              for (i = 0; i < count - 1; i++)
+ 190   1              {
+ 191   2                      if(array[i] == '0')
+ 192   2                      {
+ 193   3                              array[i] = ' ';
+ 194   3                      }
+ 195   2                      else
+ 196   2                      {
+ 197   3                              break;
+ 198   3                      }
+ 199   2              }
+ 200   1      
+ 201   1              DisplayListChar(X,Y,array);
+ 202   1      }
+ 203          
+ 204          
+ 205          //显示浮点数字
+ 206          void DisplayFloatNumber(u8 X, u8 Y, u32 number,u8 count)
+ 207          {
+ 208   1              u8 array[17];
+ 209   1              u8 i;
+ 210   1              array[count] = 0;
+ 211   1              for (i = count; i>0; i--)
+ 212   1              {
+ 213   2                      if(i==count - 3)
+ 214   2                      {
+ 215   3                              array[i-1] = '.';
+ 216   3                              i--;
+ 217   3                      }
+ 218   2                      array[i-1] = number % 10 + '0';
+ 219   2                      number /= 10; 
+ 220   2              }
+ 221   1      
+ 222   1              for (i = 0; i < count - 1; i++)
+ 223   1              {
+ 224   2                      if(array[i] == '0')
+ 225   2                      {
+ 226   3                              array[i] = ' ';
+ 227   3                      }
+ 228   2                      else
+ 229   2                      {
+ 230   3                              break;
+ 231   3                      }
+ 232   2              }
+ 233   1              DisplayListChar(X,Y,array);
+ 234   1      }
+ 235          
+ 236          
+ 237          void DisplayImage(u8 code *DData)
+ 238          {
+ 239   1              u8 x, y, i;
+C51 COMPILER V9.00   LCD12864                                                              06/27/2015 09:59:03 PAGE 5   
+
+ 240   1              u16 tmp = 0;
+ 241   1              for(i = 0; i < 9; i+=8)         //分两屏，上半屏和下半屏
+ 242   1              {
+ 243   2                      for(x=0; x<32; x++)
+ 244   2                      {
+ 245   3                              WriteCommandLCD(0x34,1);
+ 246   3                              WriteCommandLCD(0x80+x,1);              //列地址
+ 247   3                              WriteCommandLCD(0x80+i,1);              //行地址，下半屏
+ 248   3                              for(y=0;y<16;y++)
+ 249   3                              {
+ 250   4                                      WriteDataLCD(DData[tmp+y]);     //读取数据写入LCD
+ 251   4                              }
+ 252   3                              tmp +=16;
+ 253   3                      }
+ 254   2              }
+ 255   1              WriteCommandLCD(0x36,1);                //扩充功能设定
+ 256   1              WriteCommandLCD(0x30,1);
+ 257   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    740    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----      53
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
